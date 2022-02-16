@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/ansalamdaniel/library-api/pkg/models"
@@ -121,5 +122,102 @@ func TestGetBooksOptionsMethod(t *testing.T) {
 
 	if rs.Header.Get("Allow") != "GET, OPTIONS" {
 		t.Errorf("Expected headers GET, OPTIONS but got %v", rs.Header.Get("Allow"))
+	}
+}
+
+func TestCreateBook(t *testing.T) {
+	models.SetupTestDb()
+
+	rrecord := httptest.NewRecorder()
+
+	fp, err := os.Open("testdata/post.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer fp.Close()
+
+	req, err := http.NewRequest("POST", "/books/create", fp)
+	if err != nil {
+		t.Fatal()
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	createBook(rrecord, req)
+
+	rs := rrecord.Result()
+
+	if rs.StatusCode != http.StatusCreated {
+		t.Errorf("Expected %d but got %d", http.StatusCreated, rs.StatusCode)
+	}
+
+}
+
+func TestCreateBookInternalServerError(t *testing.T) {
+	rrecord := httptest.NewRecorder()
+
+	fp, err := os.Open("testdata/post.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer fp.Close()
+
+	req, err := http.NewRequest("POST", "/books/create", fp)
+	if err != nil {
+		t.Fatal()
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	createBook(rrecord, req)
+
+	rs := rrecord.Result()
+
+	if rs.StatusCode != http.StatusInternalServerError {
+		t.Errorf("Expected %d but got %d", http.StatusInternalServerError, rs.StatusCode)
+	}
+
+	models.TeardownTestDb()
+}
+
+func TestCreateBookMethodNotAllowed(t *testing.T) {
+	rrecord := httptest.NewRecorder()
+
+	req, err := http.NewRequest("GET", "/books/create", nil)
+	if err != nil {
+		t.Fatal()
+	}
+
+	createBook(rrecord, req)
+
+	rs := rrecord.Result()
+
+	if rs.StatusCode != http.StatusMethodNotAllowed {
+		t.Errorf("Expected %d but got %d", http.StatusMethodNotAllowed, rs.StatusCode)
+	}
+
+	if rs.Header.Get("Allow") != "POST, OPTIONS" {
+		t.Errorf("Expected headers POST, OPTIONS but got %v", rs.Header.Get("Allow"))
+	}
+}
+
+func TestCreateBookOptionsMethod(t *testing.T) {
+	rrecord := httptest.NewRecorder()
+
+	req, err := http.NewRequest("OPTIONS", "/books/create", nil)
+	if err != nil {
+		t.Fatal()
+	}
+
+	createBook(rrecord, req)
+
+	rs := rrecord.Result()
+
+	if rs.StatusCode != http.StatusNoContent {
+		t.Errorf("Expected %d but got %d", http.StatusNoContent, rs.StatusCode)
+	}
+
+	if rs.Header.Get("Allow") != "POST, OPTIONS" {
+		t.Errorf("Expected headers POST, OPTIONS but got %v", rs.Header.Get("Allow"))
 	}
 }
