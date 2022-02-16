@@ -21,10 +21,10 @@ type Book struct {
 	UpdatedAt    time.Time `json:"updated_at"`
 }
 
-func InitDb() {
+func InitDb(db string) {
 	var err error
 
-	DB, err = gorm.Open(sqlite.Open("db.sqlite3"), &gorm.Config{})
+	DB, err = gorm.Open(sqlite.Open(db), &gorm.Config{})
 	if err != nil {
 		log.Fatal("failed to connect database")
 	}

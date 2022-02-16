@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	models.InitDb()
+	models.InitDb("db.sqlite3")
 
 	mux := http.NewServeMux()
 
